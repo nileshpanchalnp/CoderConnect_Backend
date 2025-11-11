@@ -10,7 +10,6 @@ export const createAnswer = async (req, res) => {
     if ( !content) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-
     const answer = await Answer.create({
       question_id,
       author_id : author_id,

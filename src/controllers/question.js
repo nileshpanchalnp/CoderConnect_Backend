@@ -1,5 +1,9 @@
 import Question from "../models/question.js";
 import { User } from "../models/user.js";
+import Answer from "../models/answer.js";
+import QuestionComment from "../models/questionComment.js";
+import AnswerComment from "../models/answerComment.js";
+import Vote from "../models/vote.js"; 
 
 // Create Question
 export const createQuestion = async (req, res) => {
@@ -35,24 +39,198 @@ export const getQuestions = async (req, res) => {
 };
 
 // Get Single Question + Increase Views
+// Example of how you would modify the backend (server.js)
+// export const getQuestionById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     // CRITICAL: Get the authenticated user's ID from middleware
+//     const currentUserId = req.user?._id; 
+
+//     // --- 1. Fetch Question and Prepare for Vote Aggregation ---
+//     const questionDoc = await Question.findByIdAndUpdate(
+//       id,
+//       { $inc: { views: 1 } },
+//       { new: true }
+//     ).populate("author_id", "username display_name avatar_url reputation")
+    
+//     if (!questionDoc) return res.status(404).json({ message: "Question not found" });
+
+//     // Convert to plain object to easily add vote properties
+//     let question = questionDoc.toObject();
+
+//     // --- 2. Fetch Answers and Vote Data in Parallel ---
+//     // Get all Answers for this Question
+//     const rawAnswers = await Answer.find({ question_id: id })
+//       .populate("author_id", "username display_name avatar_url reputation")
+//       .sort({ createdAt: -1 });
+
+//     // Get the IDs of all answers to query votes efficiently
+//     const answerIds = rawAnswers.map(ans => ans._id);
+    
+//     // Fetch ALL votes related to this question (both on question and on answers)
+//     const allVotes = await Vote.find({
+//         $or: [
+//             { question_id: id },
+//             { answer_id: { $in: answerIds } }
+//         ]
+//     });
+
+//     // --- 3. Process Question Votes ---
+//     const questionVotes = allVotes.filter(v => v.question_id && v.question_id.equals(id));
+    
+//     question.vote_likes = questionVotes.filter(v => v.vote_type === 'like').length;
+//     question.vote_dislikes = questionVotes.filter(v => v.vote_type === 'dislike').length;
+//     question.user_vote = null;
+
+//     if (currentUserId) {
+//         const userVoted = questionVotes.find(v => v.author_id.equals(currentUserId));
+//         if (userVoted) {
+//             question.user_vote = userVoted.vote_type; 
+//         }
+//     }
+
+//     // --- 4. Process Answer Votes ---
+//     const answersWithVotes = rawAnswers.map(answerDoc => {
+//         let answer = answerDoc.toObject();
+//         const answerId = answer._id;
+
+//         const answerVotes = allVotes.filter(v => v.answer_id && v.answer_id.equals(answerId));
+
+//         // Calculate total likes and dislikes for the answer
+//         answer.vote_likes = answerVotes.filter(v => v.vote_type === 'like').length;
+//         answer.vote_dislikes = answerVotes.filter(v => v.vote_type === 'dislike').length;
+//         answer.user_vote = null;
+
+//         // Determine the current user's vote on the answer
+//         if (currentUserId) {
+//             const userVoted = answerVotes.find(v => v.author_id.equals(currentUserId));
+//             if (userVoted) {
+//                 answer.user_vote = userVoted.vote_type;
+//             }
+//         }
+//         return answer;
+//     });
+
+//     // --- 5. Respond with the enriched data ---
+//     res.json({ 
+//         question, 
+//         answers: answersWithVotes, 
+//     });
+//   } catch (error) {
+//     console.error("Error in getQuestionById:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+
+// Ensure Question and Answer models are also imported
+
 export const getQuestionById = async (req, res) => {
   try {
     const { id } = req.params;
+    const currentUserId = req.user?._id; 
 
-    const question = await Question.findByIdAndUpdate(
+    // --- 1. Fetch Question and Prepare for Aggregation ---
+    const questionDoc = await Question.findByIdAndUpdate(
       id,
       { $inc: { views: 1 } },
       { new: true }
     ).populate("author_id", "username display_name avatar_url reputation")
+    
+    if (!questionDoc) return res.status(404).json({ message: "Question not found" });
+    let question = questionDoc.toObject();
+
+    // --- 2. Fetch Question Votes and Comments ---
+
+    // a) Question Votes (Same logic as before)
+    const questionVotes = await Vote.find({ question_id: id });
+    question.vote_likes = questionVotes.filter(v => v.vote_type === 'like').length;
+    question.vote_dislikes = questionVotes.filter(v => v.vote_type === 'dislike').length;
+    question.user_vote = null;
+
+    if (currentUserId) {
+        const userVoted = questionVotes.find(v => v.author_id.equals(currentUserId));
+        if (userVoted) {
+            question.user_vote = userVoted.vote_type; 
+        }
+    }
+
+    // b) Question Comments (NEW)
+    const questionComments = await QuestionComment.find({ question_id: id })
+        .populate("author_id", "username display_name avatar_url reputation")
+        .sort({ createdAt: 1 }); // Usually sort comments oldest first
+
+    // --- 3. Fetch and Process Answers (Votes & Comments) ---
+    const rawAnswers = await Answer.find({ question_id: id })
+      .populate("author_id", "username display_name avatar_url reputation")
+      .sort({ createdAt: -1 });
+
+    const answerIds = rawAnswers.map(ans => ans._id);
+    
+    // Fetch ALL votes and comments related to the answers in one go for efficiency
+    const [allAnswerVotes, allAnswerComments] = await Promise.all([
+        Vote.find({ answer_id: { $in: answerIds } }),
+        AnswerComment.find({ answer_id: { $in: answerIds } })
+            .populate("author_id", "username display_name avatar_url reputation")
+            .sort({ createdAt: 1 })
+    ]);
 
 
-    if (!question) return res.status(404).json({ message: "Question not found" });
+    const answersWithDetails = rawAnswers.map(answerDoc => {
+        let answer = answerDoc.toObject();
+        const answerId = answer._id;
 
-    res.json({ question });
+        // a) Answer Votes
+        const answerVotes = allAnswerVotes.filter(v => v.answer_id && v.answer_id.equals(answerId));
+        answer.vote_likes = answerVotes.filter(v => v.vote_type === 'like').length;
+        answer.vote_dislikes = answerVotes.filter(v => v.vote_type === 'dislike').length;
+        answer.user_vote = null;
+
+        if (currentUserId) {
+            const userVoted = answerVotes.find(v => v.author_id.equals(currentUserId));
+            if (userVoted) {
+                answer.user_vote = userVoted.vote_type;
+            }
+        }
+
+        // b) Answer Comments (NEW)
+        answer.comments = allAnswerComments.filter(c => c.answer_id.equals(answerId));
+
+        return answer;
+    });
+
+    // --- 4. Respond with the full, enriched data ---
+    res.json({ 
+        question, 
+        questionComments, // <-- NEW: Question comments are sent here
+        answers: answersWithDetails, // Contains answer votes and answer comments
+    });
   } catch (error) {
+    console.error("Error in getQuestionById:", error);
     res.status(500).json({ message: error.message });
   }
 };
+// export const incrementQuestionViews = async (req, res) => {
+//   try {
+//     const { _id } = req.params;
+
+//     const question = await Question.findByIdAndUpdate(
+//       _id,
+//       { $inc: { views: 1 } },
+//       { new: true }
+//     );
+
+//     if (!question) {
+//       return res.status(404).json({ message: "Question not found" });
+//     }
+
+//     res.json({ message: "View count updated", views: question.views });
+
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 
 // Update Question
 export const updateQuestion = async (req, res) => {
