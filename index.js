@@ -11,8 +11,6 @@ import answerComment_router from "./src/routes/answerComment.js"
 import vote_router from "./src/routes/vote.js"
 import profile_router from "./src/routes/profile.js"
 
-
-
 dotenv.config();
 
 const app = express()

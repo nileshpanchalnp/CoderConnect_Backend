@@ -32,7 +32,7 @@ export const getUserProfileData = async (req, res) => {
       
       // --- Query 6: Get The User's Questions (THE NEW PART) ---
       Question.find({ author_id: user_id })
-        .select("title description views created_at") // Select only needed fields
+        .select("title description views createdAt") // Select only needed fields
         .sort({ createdAt: -1 }) // Sort by newest first
     ]);
     // --- End Parallel Queries ---
