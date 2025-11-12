@@ -26,19 +26,31 @@ export const createQuestion = async (req, res) => {
 };
 
 // Get All Questions
+// Get All Questions
 export const getQuestions = async (req, res) => {
   try {
     const questions = await Question.find()
       .populate("author_id", "username display_name avatar_url reputation")
       .sort({ createdAt: -1 });
 
-    res.json({ questions });
+    // --- ADD THIS FIX ---
+    const formattedQuestions = questions.map(question => {
+      const q = question.toObject(); 
+      return {
+        ...q,
+        // Transform the array of strings into an array of objects
+        tags: q.tags.map(tagName => ({ name: tagName })) 
+      };
+    });
+    // --- END FIX ---
+
+    // Send the formatted data
+    res.json({ questions: formattedQuestions });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Get Single Question + Increase Views
 // Example of how you would modify the backend (server.js)
 // export const getQuestionById = async (req, res) => {
 //   try {
@@ -140,6 +152,13 @@ export const getQuestionById = async (req, res) => {
     if (!questionDoc) return res.status(404).json({ message: "Question not found" });
     let question = questionDoc.toObject();
 
+    // --- ADD THIS FIX (from your getQuestions) ---
+    // Manually format tags to be an array of objects
+    if (question.tags && Array.isArray(question.tags)) {
+      question.tags = question.tags.map((tagName) => ({ name: tagName }));
+    }
+    // --- END FIX ---
+
     // --- 2. Fetch Question Votes and Comments ---
 
     // a) Question Votes (Same logic as before)
@@ -210,26 +229,6 @@ export const getQuestionById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-// export const incrementQuestionViews = async (req, res) => {
-//   try {
-//     const { _id } = req.params;
-
-//     const question = await Question.findByIdAndUpdate(
-//       _id,
-//       { $inc: { views: 1 } },
-//       { new: true }
-//     );
-
-//     if (!question) {
-//       return res.status(404).json({ message: "Question not found" });
-//     }
-
-//     res.json({ message: "View count updated", views: question.views });
-
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 
 
 // Update Question

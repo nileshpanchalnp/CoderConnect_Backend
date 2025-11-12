@@ -1,5 +1,6 @@
 import Answer from "../models/answer.js";
 import { User } from "../models/user.js";
+import Question from "../models/question.js";
 
 export const createAnswer = async (req, res) => {
   try {
@@ -17,6 +18,9 @@ export const createAnswer = async (req, res) => {
     });
     // ✅ Increase reputation
     await User.findByIdAndUpdate(author_id, { $inc: { reputation: 2 } });
+    // Increment the answer_count on the parent Question
+    await Question.findByIdAndUpdate(question_id, { $inc: { answer_count: 1 } });
+    // --- END ---
     res.status(201).json({ message: "Answer posted successfully", answer });
   } catch (error) {
     res.status(500).json({ message: error.message });
