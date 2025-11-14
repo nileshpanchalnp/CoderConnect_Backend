@@ -18,7 +18,7 @@ const app = express()
 // ✅ ALSO IMPORTANT IF YOU USE COOKIES
 app.use(cookieParser());
 
-const allowedOrigins = ['http://localhost:5173',"https://coder-connect.vercel.app/"];
+const allowedOrigins = ['http://localhost:5173',"https://coder-connect.vercel.app"];
 
 app.use(cors({
   origin: allowedOrigins,
