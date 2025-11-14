@@ -28,6 +28,13 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    message: 'Admin Panel API is running...',
+    status: 'UP',
+  });
+});
+
 app.use("/User", user_router);
 app.use("/Question",question_router)
 app.use("/Answer",answer_router)
