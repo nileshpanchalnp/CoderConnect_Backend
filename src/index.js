@@ -3,13 +3,13 @@ import mongoose from "mongoose";
 import cors from "cors"
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv"
-import user_router from "./src/routes/user.js"
-import question_router from "./src/routes/question.js"
-import answer_router from "./src/routes/answer.js"
-import QuestionComment_router from "./src/routes/questionComment.js";
-import answerComment_router from "./src/routes/answerComment.js"
-import vote_router from "./src/routes/vote.js"
-import profile_router from "./src/routes/profile.js"
+import user_router from "./routes/user.js"
+import question_router from "./routes/question.js"
+import answer_router from "./routes/answer.js"
+import QuestionComment_router from "./routes/questionComment.js";
+import answerComment_router from "./routes/answerComment.js"
+import vote_router from "./routes/vote.js"
+import profile_router from "./routes/profile.js"
 
 dotenv.config();
 
