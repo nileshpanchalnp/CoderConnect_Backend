@@ -11,11 +11,11 @@ getAllTags
 
 const question_router = express.Router();
 
-question_router.post("/create",auth, createQuestion); // create
-question_router.get("/getall", getQuestions); // get all
-question_router.get("/get/:id",optionalAuth, getQuestionById); // get single
-question_router.put("/update/:id", updateQuestion); // update
-question_router.delete("/delete/:id", deleteQuestion); // delete
+question_router.post("/create",auth, createQuestion); 
+question_router.get("/getall", getQuestions);
+question_router.get("/get/:id",optionalAuth, getQuestionById); 
+question_router.put("/update/:id", updateQuestion);
+question_router.delete("/delete/:id", deleteQuestion); 
 question_router.get("/tags", getAllTags);
 
 export default question_router;

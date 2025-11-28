@@ -1,6 +1,6 @@
 import express from "express"
 import { createAnswer, getAnswersByQuestion } from "../controllers/answer.js";
-import { auth } from "../middleware/auth.js"; // ✅ Add this
+import { auth } from "../middleware/auth.js"; 
 
 const answer_router = express.Router();
 
