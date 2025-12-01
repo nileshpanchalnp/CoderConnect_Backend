@@ -6,7 +6,7 @@ export const createAnswer = async (req, res) => {
   try {
     const { question_id } = req.params;
     const {  content } = req.body;
-    const author_id = req.user._id; // ✅ automatically from token
+    const author_id = req.user._id; 
 
     if ( !content) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -20,7 +20,6 @@ export const createAnswer = async (req, res) => {
     await User.findByIdAndUpdate(author_id, { $inc: { reputation: 2 } });
     // Increment the answer_count on the parent Question
     await Question.findByIdAndUpdate(question_id, { $inc: { answer_count: 1 } });
-    // --- END ---
     res.status(201).json({ message: "Answer posted successfully", answer });
   } catch (error) {
     res.status(500).json({ message: error.message });
