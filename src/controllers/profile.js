@@ -35,7 +35,7 @@ export const getUserProfileData = async (req, res) => {
         .select("title description views createdAt") // Select only needed fields
         .sort({ createdAt: -1 }) // Sort by newest first
     ]);
-    // --- End Parallel Queries ---
+
 
 
     const totalComments = questionCommentsCount + answerCommentsCount;

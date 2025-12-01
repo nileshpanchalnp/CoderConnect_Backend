@@ -16,7 +16,7 @@ export const createQuestion = async (req, res) => {
     }
 
     const question = await Question.create({ title, description, author_id,tags });
-        // ✅ Increase reputation
+        // Increase reputation
     await User.findByIdAndUpdate(author_id, { $inc: { reputation: 5 } });
 
     res.json({ message: "Question created successfully", question });
@@ -25,7 +25,6 @@ export const createQuestion = async (req, res) => {
   }
 };
 
-// Get All Questions
 // Get All Questions
 export const getQuestions = async (req, res) => {
   try {

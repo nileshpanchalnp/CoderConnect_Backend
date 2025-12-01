@@ -31,7 +31,7 @@ export const getAnswersByQuestion = async (req,res) => {
         const {question_id} = req.params;
 
         const answers = await Answer.find({ question_id: question_id })
-      .populate("author_id", "username display_name avatar_url reputation") // get profile data
+      .populate("author_id", "username display_name avatar_url reputation") 
       .populate("question_id", "_id title")
       .sort({ createdAt: -1 });
     res.json(answers);
