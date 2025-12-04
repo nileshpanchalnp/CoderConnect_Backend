@@ -32,7 +32,6 @@ export const getQuestions = async (req, res) => {
       .populate("author_id", "username display_name avatar_url reputation")
       .sort({ createdAt: -1 });
 
-    // --- ADD THIS FIX ---
     const formattedQuestions = questions.map(question => {
       const q = question.toObject(); 
       return {
@@ -42,8 +41,6 @@ export const getQuestions = async (req, res) => {
       };
     });
     // --- END FIX ---
-
-    // Send the formatted data
     res.json({ questions: formattedQuestions });
   } catch (error) {
     res.status(500).json({ message: error.message });
